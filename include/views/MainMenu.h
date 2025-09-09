@@ -31,7 +31,7 @@ struct MainMenuButton {
 
 class MainMenu {
  public:
-  MainMenu(Resources &resources);
+  MainMenu();
   ~MainMenu();
 
   void update(const InputManager &inputManager, SDL_Renderer *renderer);
@@ -45,7 +45,6 @@ class MainMenu {
   MainMenuAction getMainMenuAction() const { return actionToken; }
 
  private:
-  Resources &resources;
   std::map<int, MainMenuButton> buttons;
 
   MainMenuAction actionToken = MainMenuAction::NONE;

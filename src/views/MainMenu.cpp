@@ -4,7 +4,7 @@
 
 #include <glm/glm.hpp>
 
-MainMenu::MainMenu(Resources &resources) : resources(resources) {
+MainMenu::MainMenu() {
   float buttonWidth = 200.0f;
   float buttonHeight = 60.0f;
   float buttonX = (1280.0f - buttonWidth) / 2.0f;
@@ -55,11 +55,11 @@ void MainMenu::render(SDL_Renderer *renderer) {
 
     // Render button text
     SDL_Color textColor = {255, 255, 255, 255};  // White text
-    SDL_Texture *textTexture = renderText(renderer, button.text, textColor, 24);
+    unique_texture textTexture(renderText(renderer, button.text, textColor, 24));
 
     if (textTexture != nullptr) {
       float textWidth, textHeight;
-      SDL_GetTextureSize(textTexture, &textWidth, &textHeight);
+      SDL_GetTextureSize(textTexture.get(), &textWidth, &textHeight);
 
       // Center the text on the button
       SDL_FRect textRect = {
@@ -68,8 +68,7 @@ void MainMenu::render(SDL_Renderer *renderer) {
           (float)textWidth,
           (float)textHeight};
 
-      SDL_RenderTexture(renderer, textTexture, nullptr, &textRect);
-      SDL_DestroyTexture(textTexture);
+      SDL_RenderTexture(renderer, textTexture.get(), nullptr, &textRect);
     }
   }
 }
@@ -87,20 +86,20 @@ void MainMenu::quitGame() {
 }
 
 SDL_Texture *MainMenu::renderText(SDL_Renderer *renderer, const std::string &text, SDL_Color color, int fontSize) {
-  TTF_Font *font = resources.fontManager.getFont(fontSize);
+  ResourceManager &resources = ResourceManager::getInstance();
+  TTF_Font *font = resources.getFontManager().getFont(fontSize);
   if (font == nullptr) {
     std::cerr << "No font available for size " << fontSize << std::endl;
     return nullptr;
   }
 
-  SDL_Surface *textSurface = TTF_RenderText_Solid(font, text.c_str(), text.length(), color);
+  unique_surface textSurface(TTF_RenderText_Solid(font, text.c_str(), text.length(), color));
   if (textSurface == nullptr) {
     std::cerr << "TTF_RenderText_Solid Error: " << SDL_GetError() << std::endl;
     return nullptr;
   }
 
-  SDL_Texture *textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
-  SDL_DestroySurface(textSurface);
+  SDL_Texture *textTexture = SDL_CreateTextureFromSurface(renderer, textSurface.get());
 
   return textTexture;
 }

@@ -9,27 +9,31 @@ Game::Game() {
     SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", "Error initializing SDL", nullptr);
   }
 
-  window = SDL_CreateWindow("Blood Horizon", 1600, 900, 0);
+  window = unique_window(SDL_CreateWindow("Blood Horizon", 1600, 900, 0));
   if (!window) {
     SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", "Error creating window", nullptr);
     cleanup();
   }
 
-  renderer = SDL_CreateRenderer(window, nullptr);
+  renderer = unique_renderer(SDL_CreateRenderer(window.get(), nullptr));
   if (!renderer) {
     SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", "Error creating renderer", nullptr);
     cleanup();
   }
 
-  resources.load(renderer);
+  ResourceManager &resources = ResourceManager::getInstance();
+  if (!resources.initialize(renderer.get())) {
+    SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", "Error initializing ResourceManager", nullptr);
+    cleanup();
+  }
 
-  SDL_SetRenderVSync(renderer, 1);
+  SDL_SetRenderVSync(renderer.get(), 1);
 
-  SDL_SetRenderLogicalPresentation(renderer, GameConfig::LOGICAL_WIDTH, GameConfig::LOGICAL_HEIGHT, SDL_LOGICAL_PRESENTATION_LETTERBOX);
+  SDL_SetRenderLogicalPresentation(renderer.get(), GameConfig::LOGICAL_WIDTH, GameConfig::LOGICAL_HEIGHT, SDL_LOGICAL_PRESENTATION_LETTERBOX);
 
   switch (currentGameState) {
     case GameState::MAINMENU: {
-      mainMenuView = std::make_unique<MainMenu>(resources);
+      mainMenuView = std::make_unique<MainMenu>();
       break;
     }
     case GameState::GAMELOOP: {
@@ -37,7 +41,7 @@ Game::Game() {
       break;
     }
     default: {
-      mainMenuView = std::make_unique<MainMenu>(resources);
+      mainMenuView = std::make_unique<MainMenu>();
       break;
     }
   }
@@ -69,7 +73,7 @@ void Game::run() {
             debugMode = !debugMode;
           } else if (event.key.scancode == SDL_SCANCODE_F11) {
             fullscreen = !fullscreen;
-            SDL_SetWindowFullscreen(window, fullscreen);
+            SDL_SetWindowFullscreen(window.get(), fullscreen);
           }
         }
       }
@@ -84,14 +88,14 @@ void Game::run() {
     prevTime = nowTime;
   }
 
-  resources.unload();
+  ResourceManager::getInstance().cleanup();
   cleanup();
 }
 
 void Game::update(float deltaTime) {
   switch (currentGameState) {
     case GameState::MAINMENU: {
-      mainMenuView->update(inputManager, renderer);
+      mainMenuView->update(inputManager, renderer.get());
 
       switch (mainMenuView->getMainMenuAction()) {
         case MainMenuAction::QUIT: {
@@ -118,8 +122,8 @@ void Game::update(float deltaTime) {
 }
 
 void Game::render() {
-  SDL_SetRenderDrawColor(renderer, 20, 10, 30, 255);
-  SDL_RenderClear(renderer);
+  SDL_SetRenderDrawColor(renderer.get(), 20, 10, 30, 255);
+  SDL_RenderClear(renderer.get());
 
   renderUI();
 
@@ -127,17 +131,17 @@ void Game::render() {
     renderDebug();
 
   // swap buffers and present
-  SDL_RenderPresent(renderer);
+  SDL_RenderPresent(renderer.get());
 }
 
 void Game::renderUI() {
   switch (currentGameState) {
     case GameState::MAINMENU: {
-      mainMenuView->render(renderer);
+      mainMenuView->render(renderer.get());
       break;
     }
     case GameState::GAMELOOP: {
-      gameLoopView->render(renderer);
+      gameLoopView->render(renderer.get());
       break;
     }
     default:
@@ -149,17 +153,17 @@ void Game::renderDebug() {
   // if (currentGameState != GameState::GAMELOOP)
   // return;
 
-  SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-  SDL_RenderDebugText(renderer, 5, 5, std::to_string(static_cast<int>(currentGameState)).c_str());
+  SDL_SetRenderDrawColor(renderer.get(), 255, 255, 255, 255);
+  SDL_RenderDebugText(renderer.get(), 5, 5, std::to_string(static_cast<int>(currentGameState)).c_str());
 
-  auto pos = inputManager.getCursorPosition(renderer);
+  auto pos = inputManager.getCursorPosition(renderer.get());
   std::string posStr = "Cursor: (" + std::to_string(pos.x) + ", " + std::to_string(pos.y) + ")";
-  SDL_RenderDebugText(renderer, 5, 15, posStr.c_str());
+  SDL_RenderDebugText(renderer.get(), 5, 15, posStr.c_str());
 }
 
 void Game::cleanup() {
-  SDL_DestroyRenderer(renderer);
-  SDL_DestroyWindow(window);
+  renderer.reset();
+  window.reset();
   SDL_Quit();
 }
 
@@ -178,7 +182,7 @@ void Game::changeGameState(GameState newGameState) {
     case GameState::MAINMENU: {
       // TODO: unload rest views
 
-      mainMenuView = std::make_unique<MainMenu>(resources);
+      mainMenuView = std::make_unique<MainMenu>();
       currentGameState = GameState::MAINMENU;
       break;
     }

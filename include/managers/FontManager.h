@@ -5,6 +5,8 @@
 #include <map>
 #include <string>
 
+#include "utils/SDLDeleter.h"
+
 class FontManager {
  public:
   FontManager();
@@ -17,6 +19,6 @@ class FontManager {
   bool loadFont(const std::string &fontPath, int size);
 
  private:
-  std::map<int, TTF_Font *> fonts;
+  std::map<int, shared_font> fonts;
   std::string defaultFontPath;
 };

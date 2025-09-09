@@ -19,11 +19,6 @@ bool FontManager::initialize() {
 }
 
 void FontManager::cleanup() {
-  for (auto &[size, font] : fonts) {
-    if (font != nullptr) {
-      TTF_CloseFont(font);
-    }
-  }
   fonts.clear();
   TTF_Quit();
 }
@@ -31,7 +26,7 @@ void FontManager::cleanup() {
 TTF_Font *FontManager::getFont(int size) const {
   auto it = fonts.find(size);
   if (it != fonts.end()) {
-    return it->second;
+    return it->second.get();
   }
   return nullptr;
 }
@@ -70,7 +65,7 @@ bool FontManager::loadFont(const std::string &fontPath, int size) {
     return false;
   }
 
-  fonts[size] = font;
+  fonts[size] = shared_font(font, SDLDeleter{});
   std::cout << "Successfully loaded font at size " << size << std::endl;
   return true;
 }

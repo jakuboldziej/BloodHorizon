@@ -5,6 +5,7 @@
 #include <memory>
 
 #include "managers/ResourceManager.h"
+#include "utils/SDLDeleter.h"
 #include "views/GameLoop.h"
 #include "views/MainMenu.h"
 
@@ -22,10 +23,8 @@ class Game {
   void run();
 
  private:
-  SDL_Window *window;
-  SDL_Renderer *renderer;
-
-  Resources resources;
+  unique_window window;
+  unique_renderer renderer;
 
   GameState currentGameState = GameState::MAINMENU;
 

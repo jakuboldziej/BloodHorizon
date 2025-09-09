@@ -5,6 +5,7 @@
 #include <memory>
 
 #include "Player.h"
+#include "managers/ResourceManager.h"
 
 class GameLoop {
  public:
