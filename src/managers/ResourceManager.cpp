@@ -15,13 +15,13 @@ bool ResourceManager::initialize(SDL_Renderer *renderer) {
   fontManager.loadFont("resources/fonts/vgasyse.ttf", 32);
 
   // Initialize animations
-  animations[AnimationType::PLAYER1_IDLE] = Animation(8, 1.6f);
-  animations[AnimationType::PLAYER1_RUN] = Animation(6, 0.75f);
-  animations[AnimationType::PLAYER1_TAKING_PUNCH] = Animation(5, 0.75f);
+  animations[AnimationType::PLAYER1_IDLE] = Animation(8, 12);         // 8 frames, 12 game frames each = 96 game frames total (1.6s)
+  animations[AnimationType::PLAYER1_RUN] = Animation(6, 7);           // 6 frames, 7 game frames each = 42 game frames total (0.7s)
+  animations[AnimationType::PLAYER1_TAKING_PUNCH] = Animation(6, 7);  // 6 frames, 7 game frames each = 42 game frames total (0.7s)
 
-  animations[AnimationType::PLAYER2_IDLE] = Animation(8, 1.6f);
-  animations[AnimationType::PLAYER2_RUN] = Animation(6, 0.75f);
-  animations[AnimationType::PLAYER2_TAKING_PUNCH] = Animation(5, 0.75f);
+  animations[AnimationType::PLAYER2_IDLE] = Animation(8, 12);
+  animations[AnimationType::PLAYER2_RUN] = Animation(6, 7);
+  animations[AnimationType::PLAYER2_TAKING_PUNCH] = Animation(6, 7);
 
   // Pre-load common textures
   getTexture("resources/textures/player1/idle.png");
@@ -49,7 +49,6 @@ void ResourceManager::cleanup() {
 
 shared_texture ResourceManager::getTexture(const std::string &path) {
   if (!initialized || !renderer) {
-    std::cerr << "ResourceManager not initialized!" << std::endl;
     return nullptr;
   }
 

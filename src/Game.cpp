@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "GameConfig.h"
+#include "managers/DebugManager.h"
 
 Game::Game() {
   if (!SDL_Init(SDL_INIT_VIDEO)) {
@@ -31,6 +32,8 @@ Game::Game() {
 
   SDL_SetRenderLogicalPresentation(renderer.get(), GameConfig::LOGICAL_WIDTH, GameConfig::LOGICAL_HEIGHT, SDL_LOGICAL_PRESENTATION_LETTERBOX);
 
+  DebugManager::getInstance().initialize(renderer.get());
+
   switch (currentGameState) {
     case GameState::MAINMENU: {
       mainMenuView = std::make_unique<MainMenu>();
@@ -52,40 +55,45 @@ Game::~Game() {
 }
 
 void Game::run() {
-  uint64_t prevTime = SDL_GetTicks();
+  const int TARGET_FPS = 60;
+  const double TARGET_FRAME_TIME = 1000.0 / TARGET_FPS;  // milliseconds
+
+  uint64_t lastFrameTime = SDL_GetPerformanceCounter();
 
   while (running) {
-    uint64_t nowTime = SDL_GetTicks();
-    float deltaTime = (nowTime - prevTime) / 1000.0f;
-
-    // events
+    uint64_t currentTime = SDL_GetPerformanceCounter();
+    double deltaTimeMs = (double)(currentTime - lastFrameTime) / SDL_GetPerformanceFrequency() * 1000.0;
+    lastFrameTime = currentTime;
 
     inputManager.initProcessSession();
     SDL_Event event{0};
     while (SDL_PollEvent(&event)) {
       switch (event.type) {
-        case SDL_EVENT_QUIT: {
+        case SDL_EVENT_QUIT:
           running = false;
           break;
-        }
-        case SDL_EVENT_KEY_UP: {
-          if (event.key.scancode == SDL_SCANCODE_DELETE) {
+        case SDL_EVENT_KEY_UP:
+          if (event.key.scancode == SDL_SCANCODE_F1) {
             debugMode = !debugMode;
+            DebugManager::getInstance().setDebugMode(debugMode);
           } else if (event.key.scancode == SDL_SCANCODE_F11) {
             fullscreen = !fullscreen;
             SDL_SetWindowFullscreen(window.get(), fullscreen);
           }
-        }
+          break;
       }
-
       inputManager.processEvent(event);
     }
 
-    update(deltaTime);
+    update(deltaTimeMs / 1000.0f);  // Convert to seconds for compatibility
 
     render();
 
-    prevTime = nowTime;
+    // Frame rate limiting
+    double frameTimeMs = (double)(SDL_GetPerformanceCounter() - currentTime) / SDL_GetPerformanceFrequency() * 1000.0;
+    if (frameTimeMs < TARGET_FRAME_TIME) {
+      SDL_Delay((Uint32)(TARGET_FRAME_TIME - frameTimeMs));
+    }
   }
 
   ResourceManager::getInstance().cleanup();
@@ -112,8 +120,7 @@ void Game::update(float deltaTime) {
       break;
     }
     case GameState::GAMELOOP: {
-      // Handle game loop updates here
-      gameLoopView->update();
+      gameLoopView->update(inputManager, deltaTime);
       break;
     }
     default:
@@ -127,8 +134,11 @@ void Game::render() {
 
   renderUI();
 
-  if (debugMode)
+  if (debugMode) {
+    DebugManager::getInstance().clear();
     renderDebug();
+    DebugManager::getInstance().render(renderer.get());
+  }
 
   // swap buffers and present
   SDL_RenderPresent(renderer.get());
@@ -150,15 +160,27 @@ void Game::renderUI() {
 }
 
 void Game::renderDebug() {
-  // if (currentGameState != GameState::GAMELOOP)
-  // return;
+  DebugManager &debug = DebugManager::getInstance();
 
-  SDL_SetRenderDrawColor(renderer.get(), 255, 255, 255, 255);
-  SDL_RenderDebugText(renderer.get(), 5, 5, std::to_string(static_cast<int>(currentGameState)).c_str());
+  debug.debugGameState(static_cast<int>(currentGameState));
 
   auto pos = inputManager.getCursorPosition(renderer.get());
-  std::string posStr = "Cursor: (" + std::to_string(pos.x) + ", " + std::to_string(pos.y) + ")";
-  SDL_RenderDebugText(renderer.get(), 5, 15, posStr.c_str());
+  debug.debugCursorPosition(pos.x, pos.y);
+
+  debug.debugInputManager(inputManager);
+
+  if (currentGameState == GameState::GAMELOOP && gameLoopView) {
+    const Player *player1 = gameLoopView->getPlayer1();
+    const Player *player2 = gameLoopView->getPlayer2();
+
+    if (player1) {
+      debug.debugPlayer(player1, "Player1");
+    }
+
+    if (player2) {
+      debug.debugPlayer(player2, "Player2");
+    }
+  }
 }
 
 void Game::cleanup() {

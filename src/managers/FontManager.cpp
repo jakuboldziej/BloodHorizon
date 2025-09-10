@@ -12,7 +12,7 @@ FontManager::~FontManager() {
 
 bool FontManager::initialize() {
   if (TTF_Init() == -1) {
-    std::cerr << "TTF_Init Error: " << SDL_GetError() << std::endl;
+    std::cerr << "TTF_Init Error: " << SDL_GetError() << '\n';
     return false;
   }
   return true;
@@ -41,7 +41,7 @@ bool FontManager::loadFont(const std::string &fontPath, int size) {
   font = TTF_OpenFont(fontPath.c_str(), size);
 
   if (font == nullptr) {
-    std::cerr << "TTF_OpenFont Error for " << fontPath << ": " << SDL_GetError() << std::endl;
+    std::cerr << "TTF_OpenFont Error for " << fontPath << ": " << SDL_GetError() << '\n';
 
     std::vector<std::string> fallbackFonts = {
         "C:/Windows/Fonts/consola.ttf",  // Console font, similar to VGA
@@ -53,19 +53,19 @@ bool FontManager::loadFont(const std::string &fontPath, int size) {
     for (const auto &fallback : fallbackFonts) {
       font = TTF_OpenFont(fallback.c_str(), size);
       if (font != nullptr) {
-        std::cout << "Using fallback font: " << fallback << " (size " << size << ")" << std::endl;
+        std::cout << "Using fallback font: " << fallback << " (size " << size << ")" << '\n';
         break;
       }
     }
   }
 
   if (font == nullptr) {
-    std::cerr << "Failed to load any font for size " << size << std::endl;
-    std::cerr << "Note: .fon files are not supported. Please use .ttf or .otf fonts." << std::endl;
+    std::cerr << "Failed to load any font for size " << size << '\n';
+    std::cerr << "Note: .fon files are not supported. Please use .ttf or .otf fonts." << '\n';
     return false;
   }
 
   fonts[size] = shared_font(font, SDLDeleter{});
-  std::cout << "Successfully loaded font at size " << size << std::endl;
+  std::cout << "Successfully loaded font at size " << size << '\n';
   return true;
 }

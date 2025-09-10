@@ -14,8 +14,23 @@ class Player {
   Player(bool primaryPlayer);
   ~Player();
 
-  void update();
+  void update(float deltaTime);
   void render(SDL_Renderer *renderer);
+
+  void setAnimation(int animationIndex);
+  int getCurrentAnimation() const { return currentAnimation; }
+
+  void playIdleAnimation() { setAnimation(0); }
+  void playRunAnimation() { setAnimation(1); }
+  void playTakingPunchAnimation() { setAnimation(2); }
+
+  void move(float direction);
+  void jump();
+  void punch();
+  void stopMoving();
+
+  glm::vec2 getPosition() const { return position; }
+  bool isMoving() const { return velocity.x != 0; }
 
  private:
   shared_texture idleTexture;
@@ -26,6 +41,10 @@ class Player {
   glm::vec2 position, velocity;
 
   float direction;
+  float moveSpeed;
+  float jumpPower;
+  bool isGrounded;
+  bool isActivelyMoving;
 
   std::vector<Animation> animations;
   int currentAnimation;

@@ -89,13 +89,13 @@ SDL_Texture *MainMenu::renderText(SDL_Renderer *renderer, const std::string &tex
   ResourceManager &resources = ResourceManager::getInstance();
   TTF_Font *font = resources.getFontManager().getFont(fontSize);
   if (font == nullptr) {
-    std::cerr << "No font available for size " << fontSize << std::endl;
+    std::cerr << "No font available for size " << fontSize << '\n';
     return nullptr;
   }
 
   unique_surface textSurface(TTF_RenderText_Solid(font, text.c_str(), text.length(), color));
   if (textSurface == nullptr) {
-    std::cerr << "TTF_RenderText_Solid Error: " << SDL_GetError() << std::endl;
+    std::cerr << "TTF_RenderText_Solid Error: " << SDL_GetError() << '\n';
     return nullptr;
   }
 
