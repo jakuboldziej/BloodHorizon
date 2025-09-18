@@ -4,6 +4,7 @@
 
 #include <memory>
 
+#include "managers/ResolutionManager.h"
 #include "managers/ResourceManager.h"
 #include "utils/SDLDeleter.h"
 #include "views/GameLoop.h"
@@ -21,6 +22,8 @@ class Game {
 
   void cleanup();
   void run();
+
+  void changeResolution(const Resolution &newResolution);
 
  private:
   unique_window window;

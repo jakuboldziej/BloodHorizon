@@ -24,13 +24,25 @@ class Player {
   void playRunAnimation() { setAnimation(1); }
   void playTakingPunchAnimation() { setAnimation(2); }
 
+  bool isPlayerGrounded() const { return isGrounded; }
+
   void move(float direction);
   void jump();
   void punch();
   void stopMoving();
 
   glm::vec2 getPosition() const { return position; }
+  void setPosition(const glm::vec2 &newPosition) {
+    position = newPosition;
+    velocity *= 0.8f;
+  }
   bool isMoving() const { return velocity.x != 0; }
+
+  SDL_FRect getWorldHitbox() const;
+  SDL_FRect getAttackBox() const;
+  void applyKnockback(const glm::vec2 &knockbackVelocity);
+
+  SDL_FRect getLocalHitbox() const { return hitbox; }
 
  private:
   shared_texture idleTexture;

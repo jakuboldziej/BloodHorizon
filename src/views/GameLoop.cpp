@@ -1,5 +1,7 @@
 #include "views/GameLoop.h"
 
+#include "GameConfig.h"
+#include "managers/CollisionManager.h"
 #include "managers/InputManager.h"
 
 GameLoop::GameLoop() {
@@ -8,6 +10,18 @@ GameLoop::GameLoop() {
 
   player1->playIdleAnimation();
   player2->playIdleAnimation();
+
+  CollisionManager &collisionManager = CollisionManager::getInstance();
+  SDL_FRect worldBounds = {0, 0, GameConfig::LOGICAL_WIDTH, GameConfig::LOGICAL_HEIGHT};
+  collisionManager.setWorldBounds(worldBounds);
+
+  collisionManager.setOnPlayerHitCallback([this](Player *attacker, Player *defender) {
+    // sound effects, particles
+  });
+
+  collisionManager.setOnBoundaryHitCallback([this](Player *player) {
+    // prevent movement
+  });
 }
 
 GameLoop::~GameLoop() {
@@ -17,8 +31,19 @@ GameLoop::~GameLoop() {
 
 bool GameLoop::update(InputManager inputManager, float deltaTime) {
   handleInput(inputManager);
+
   player1->update(deltaTime);
   player2->update(deltaTime);
+
+  CollisionManager &collisionManager = CollisionManager::getInstance();
+
+  collisionManager.checkPlayerCollisions(player1.get(), player2.get());
+
+  collisionManager.checkPlayerBoundaryCollisions(player1.get());
+  collisionManager.checkPlayerBoundaryCollisions(player2.get());
+
+  collisionManager.checkPlayerAttackCollisions(player1.get(), player2.get());
+  collisionManager.checkPlayerAttackCollisions(player2.get(), player1.get());
 
   return true;
 }

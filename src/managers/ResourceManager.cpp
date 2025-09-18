@@ -11,6 +11,7 @@ bool ResourceManager::initialize(SDL_Renderer *renderer) {
 
   // Initialize font manager
   fontManager.initialize();
+  fontManager.loadFont("resources/fonts/vgasyse.ttf", 12);
   fontManager.loadFont("resources/fonts/vgasyse.ttf", 24);
   fontManager.loadFont("resources/fonts/vgasyse.ttf", 32);
 

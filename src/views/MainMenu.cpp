@@ -4,11 +4,13 @@
 
 #include <glm/glm.hpp>
 
+#include "GameConfig.h"
+
 MainMenu::MainMenu() {
-  float buttonWidth = 200.0f;
-  float buttonHeight = 60.0f;
-  float buttonX = (1280.0f - buttonWidth) / 2.0f;
-  float buttonY = (720.0f - buttonHeight) / 2.0f;
+  float buttonWidth = 150.0f;
+  float buttonHeight = 45.0f;
+  float buttonX = (GameConfig::LOGICAL_WIDTH - buttonWidth) / 2.0f;
+  float buttonY = (GameConfig::LOGICAL_HEIGHT - buttonHeight) / 2.0f;
 
   buttons[0] = {"START", {buttonX, buttonY, buttonWidth, buttonHeight}, ButtonState::NONE, [this]() { this->startButtonCallback(); }};
 }
@@ -65,8 +67,8 @@ void MainMenu::render(SDL_Renderer *renderer) {
       SDL_FRect textRect = {
           button.dimensions.x + (button.dimensions.w - textWidth) / 2.0f,
           button.dimensions.y + (button.dimensions.h - textHeight) / 2.0f,
-          (float)textWidth,
-          (float)textHeight};
+          textWidth,
+          textHeight};
 
       SDL_RenderTexture(renderer, textTexture.get(), nullptr, &textRect);
     }

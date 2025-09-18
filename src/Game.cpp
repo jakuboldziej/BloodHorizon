@@ -10,7 +10,7 @@ Game::Game() {
     SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", "Error initializing SDL", nullptr);
   }
 
-  window = unique_window(SDL_CreateWindow("Blood Horizon", 1600, 900, 0));
+  window = unique_window(SDL_CreateWindow("Blood Horizon", GameConfig::DEFAULT_WINDOW_WIDTH, GameConfig::DEFAULT_WINDOW_HEIGHT, 0));
   if (!window) {
     SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", "Error creating window", nullptr);
     cleanup();
@@ -22,6 +22,10 @@ Game::Game() {
     cleanup();
   }
 
+  ResolutionManager &resolutionManager = ResolutionManager::getInstance();
+  resolutionManager.initialize(GameConfig::LOGICAL_WIDTH, GameConfig::LOGICAL_HEIGHT,
+                               GameConfig::DEFAULT_WINDOW_WIDTH, GameConfig::DEFAULT_WINDOW_HEIGHT);
+
   ResourceManager &resources = ResourceManager::getInstance();
   if (!resources.initialize(renderer.get())) {
     SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", "Error initializing ResourceManager", nullptr);
@@ -30,7 +34,8 @@ Game::Game() {
 
   SDL_SetRenderVSync(renderer.get(), 1);
 
-  SDL_SetRenderLogicalPresentation(renderer.get(), GameConfig::LOGICAL_WIDTH, GameConfig::LOGICAL_HEIGHT, SDL_LOGICAL_PRESENTATION_LETTERBOX);
+  SDL_SetRenderLogicalPresentation(renderer.get(), GameConfig::LOGICAL_WIDTH, GameConfig::LOGICAL_HEIGHT,
+                                   SDL_LOGICAL_PRESENTATION_LETTERBOX);
 
   DebugManager::getInstance().initialize(renderer.get());
 
@@ -77,8 +82,9 @@ void Game::run() {
             debugMode = !debugMode;
             DebugManager::getInstance().setDebugMode(debugMode);
           } else if (event.key.scancode == SDL_SCANCODE_F11) {
-            fullscreen = !fullscreen;
-            SDL_SetWindowFullscreen(window.get(), fullscreen);
+            ResolutionManager &resolutionManager = ResolutionManager::getInstance();
+            resolutionManager.toggleFullscreen(window.get());
+            fullscreen = resolutionManager.isFullscreen();
           }
           break;
       }
@@ -138,6 +144,12 @@ void Game::render() {
     DebugManager::getInstance().clear();
     renderDebug();
     DebugManager::getInstance().render(renderer.get());
+
+    if (currentGameState == GameState::GAMELOOP && gameLoopView) {
+      const Player *player1 = gameLoopView->getPlayer1();
+      const Player *player2 = gameLoopView->getPlayer2();
+      DebugManager::getInstance().renderCollisionBoxes(renderer.get(), player1, player2);
+    }
   }
 
   // swap buffers and present
@@ -169,6 +181,8 @@ void Game::renderDebug() {
 
   debug.debugInputManager(inputManager);
 
+  debug.debugCollisionManager();
+
   if (currentGameState == GameState::GAMELOOP && gameLoopView) {
     const Player *player1 = gameLoopView->getPlayer1();
     const Player *player2 = gameLoopView->getPlayer2();
@@ -180,6 +194,19 @@ void Game::renderDebug() {
     if (player2) {
       debug.debugPlayer(player2, "Player2");
     }
+  }
+}
+
+void Game::changeResolution(const Resolution &newResolution) {
+  ResolutionManager &resolutionManager = ResolutionManager::getInstance();
+  resolutionManager.setWindowResolution(window.get(), newResolution);
+
+  // Optional: Print scaling info for debugging
+  if (resolutionManager.isPixelPerfect(newResolution)) {
+    std::cout << "Changed to pixel-perfect resolution: " << newResolution.width << "x" << newResolution.height << std::endl;
+  } else {
+    std::cout << "Changed to resolution: " << newResolution.width << "x" << newResolution.height
+              << " (scaling factor: " << resolutionManager.getScalingFactor() << ")" << std::endl;
   }
 }
 

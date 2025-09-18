@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 
+#include "managers/FontManager.h"
 #include "managers/InputManager.h"
 
 class Player;
@@ -25,11 +26,14 @@ class DebugManager {
   void debugInputManager(const InputManager &inputManager);
   void debugGameState(int gameState);
   void debugCursorPosition(float x, float y);
+  void debugCollisionManager();
 
   void addDebugText(const std::string &text);
   void addDebugValue(const std::string &name, float value);
   void addDebugValue(const std::string &name, int value);
   void addDebugValue(const std::string &name, bool value);
+
+  void renderCollisionBoxes(SDL_Renderer *renderer, const Player *player1, const Player *player2);
 
  private:
   DebugManager() = default;
@@ -39,6 +43,8 @@ class DebugManager {
 
   bool debugMode = false;
   SDL_Renderer *renderer = nullptr;
+
+  static constexpr int DEBUG_FONT_SIZE = 12;
 
   struct DebugLine {
     std::string text;
